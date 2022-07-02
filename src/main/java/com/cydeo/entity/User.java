@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @Data
@@ -31,6 +30,5 @@ public class User extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
-
 
 }

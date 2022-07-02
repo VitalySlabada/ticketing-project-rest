@@ -3,8 +3,6 @@ package com.cydeo.service.impl;
 import com.cydeo.dto.ProjectDTO;
 import com.cydeo.dto.TaskDTO;
 import com.cydeo.dto.UserDTO;
-import com.cydeo.entity.Project;
-import com.cydeo.entity.Task;
 import com.cydeo.entity.User;
 import com.cydeo.exception.TicketingProjectException;
 import com.cydeo.mapper.UserMapper;
@@ -13,10 +11,9 @@ import com.cydeo.service.KeycloakService;
 import com.cydeo.service.ProjectService;
 import com.cydeo.service.TaskService;
 import com.cydeo.service.UserService;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,13 +26,15 @@ public class UserServiceImpl implements UserService {
     private final ProjectService projectService;
     private final TaskService taskService;
     private final KeycloakService keycloakService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, ProjectService projectService, TaskService taskService, KeycloakService keycloakService) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, ProjectService projectService, TaskService taskService, KeycloakService keycloakService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.projectService = projectService;
         this.taskService = taskService;
         this.keycloakService = keycloakService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -57,7 +56,10 @@ public class UserServiceImpl implements UserService {
 
         dto.setEnabled(true);
 
+        String encodedPassword = passwordEncoder.encode(dto.getPassWord());
+
         User obj = userMapper.convertToEntity(dto);
+        obj.setPassWord(encodedPassword);
 
         userRepository.save(obj);
 
@@ -68,7 +70,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO update(UserDTO dto) {
 
-       //Find current user
+        //Find current user
         User user = userRepository.findByUserName(dto.getUserName());
         //Map updated user dto to entity object
         User convertedUser = userMapper.convertToEntity(dto);
@@ -95,7 +97,7 @@ public class UserServiceImpl implements UserService {
             user.setUserName(user.getUserName() + "-" + user.getId());
             userRepository.save(user);
             keycloakService.delete(username);
-        }else{
+        } else {
             throw new TicketingProjectException("User can not be deleted");
         }
 
@@ -103,7 +105,7 @@ public class UserServiceImpl implements UserService {
 
     private boolean checkIfUserCanBeDeleted(User user) throws TicketingProjectException {
 
-        if(user==null){
+        if (user == null) {
             throw new TicketingProjectException("User not found");
         }
 
